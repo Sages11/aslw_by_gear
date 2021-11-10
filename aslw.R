@@ -14,18 +14,33 @@ df <- rbind(df1, df2, df3) %>%
          Gear = as.factor(Gear),
          Age = as.factor(Year_of_Life),
          Sex = as.factor(Sex),
-         Source = as.factor(Source)) %>%
+         Sources = as.factor(Source)) %>%
   select(-FishNum, -Year_of_Life) %>% #no need to know individual fish number
-  mutate(Source=recode(Source, 
+  mutate(Sources=recode(Sources, 
                          `6`="Fish & Bait",
                          `5`="Test Fishery",
                          `0`="Roe",
-                         `1`="Special Use"))%>%
-  filter(Source == "Test Fishery") %>% #take out test fishery
+                         `1`="Special Use")) #%>%
+  #filter(Source == "Test Fishery") #take out test fishery
   
-unique(df$Source)
+unique(df$Sources)
 # Source codes are: 0 = roe, 5 = test, 6 = F&B, 1 - special use. Gear codes are 19 = gillnet, 29 = seine, 1 = other
 # Plot distribution of ages by gear and source, by year
+
+len <- ggplot(df, aes(x=Year, y=Length, fill = Sources)) + 
+  #scale_fill_viridis_c() +
+  geom_boxplot() + 
+  labs(y = "Length (mm)")+
+  theme(legend.position = "top")
+  #facet_wrap(~Sex)
+
+weight <- ggplot(df, aes(x=Year, y=Weight, fill = Sources)) + 
+  #scale_fill_viridis_c() +
+  geom_boxplot() + 
+  labs(y = "Weight (g)")+
+  theme(legend.position = "top")
+#facet_wrap(~Sex)
+
 ageDistGearPlot <- ggplot(data = df , mapping = aes(x=Age, fill = Source)) +
   scale_fill_viridis_b() +
   geom_bar(position = "dodge") + 
