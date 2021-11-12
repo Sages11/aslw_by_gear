@@ -56,10 +56,17 @@ df5 <- df %>%  # This should have nothing in it if the anti_jion worked.
   filter(Sources == "Special Use area 13-14") %>% 
   filter(Area %!in% c("13", "14"))
 
-ratiodf <- df %>%
+ndf <- df %>%
+  group_by(Year, Sources) %>%
+  summarise(size = n()) 
+
+
+sexdf <- df %>%
   #filter(Sex != "U") %>%
   group_by(Year, Sources, Sex) %>%
-  summarise(n = n()) %>%
+  summarise(n = n())
+
+ratiodf <- sexdf%>%
   pivot_wider(names_from = "Sex",
               values_from = "n") %>%
   mutate( n = F + M,
@@ -67,11 +74,20 @@ ratiodf <- df %>%
     myaxis = paste0(Sources, "\n", "n=", n))
 
 unique(df$Sex)  
+
+library(plyr)
+xlabels <- 
+
+ggplot(ExampleData, aes(x = Site,y = Aluminum_Dissolved))+
+  stat_boxplot(geom='errorbar', linetype=1)+
+  geom_boxplot(fill="pink") + geom_hline(yintercept = 0.4) + 
+  scale_x_discrete(labels = xlabels[['xlabels']])
 ##Plots
 
 ggplot(df, aes(x=Year, y=Length, fill = Sources)) + 
   #scale_fill_viridis_c() +
   geom_boxplot(position = position_dodge2(width = 0.9, preserve = "single")) + 
+  #geom_text(data = ndf, aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)+
   labs(y = "Length (mm)", x = NULL)+
   theme(legend.position = "top",
         text = element_text(size = 20),
@@ -171,10 +187,24 @@ ggplot(data = df , mapping = aes(x=Sex, fill = Sources)) +
 
 ggsave("figures/Sexgear.png", width = mywidth, height = myheight)
 
+#Omit this graph
+sexdf %>%
+  #group_by(Sources) %>%
+  ggplot( aes(x = Sex))+
+  geom_bar()+
+  facet_wrap(~ Year, ncol = 3, scales = "free_y", dir ="h") +
+  theme(legend.position = "top",
+        text = element_text(size = 16),
+        #axis.text.x=element_blank (),
+        legend.title = element_blank())
+  
+  
+
 ggplot(data = ratiodf , mapping = aes(x=Sources, y=F/(F+M), fill = Sources)) +
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity") +
+  coord_cartesian(ylim = c(.3, .7))+
   labs(y = "F/(F+M)", x = NULL) +
-  geom_hline(yintercept = 0.5, alpha = 0.7, linetype =2) +
+  geom_hline(yintercept = 0.5, alpha = 0.4, linetype =2) +
   geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)+
   facet_wrap(~ Year, ncol = 3, scales = "free_y", dir ="h") +
   theme(legend.position = "top",
