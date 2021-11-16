@@ -60,6 +60,12 @@ ndf <- df %>%
   group_by(Year, Sources) %>%
   summarise(size = n()) 
 
+ndf$xlabels <- ndf$size
+
+df <- left_join(df, ndf, by = c("Year", "Sources"), copy = FALSE,
+                suffix = c(".x", ".y"), keep = FALSE,
+                na_matched = "na")
+
 
 sexdf <- df %>%
   #filter(Sex != "U") %>%
@@ -70,28 +76,19 @@ ratiodf <- sexdf%>%
   pivot_wider(names_from = "Sex",
               values_from = "n") %>%
   mutate( n = F + M,
-    Fratio = F/n,
+    Fratio = round(F/n, 2),
     myaxis = paste0(Sources, "\n", "n=", n))
 
-unique(df$Sex)  
-
-library(plyr)
-xlabels <- 
-
-ggplot(ExampleData, aes(x = Site,y = Aluminum_Dissolved))+
-  stat_boxplot(geom='errorbar', linetype=1)+
-  geom_boxplot(fill="pink") + geom_hline(yintercept = 0.4) + 
-  scale_x_discrete(labels = xlabels[['xlabels']])
 ##Plots
 
 ggplot(df, aes(x=Year, y=Length, fill = Sources)) + 
-  #scale_fill_viridis_c() +
   geom_boxplot(position = position_dodge2(width = 0.9, preserve = "single")) + 
-  #geom_text(data = ndf, aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)+
-  labs(y = "Length (mm)", x = NULL)+
+  #geom_text(aes(label=xlabels), position=position_dodge(width=0.9), vjust=-0.25)+
+  labs(y = "Length (mm)")+
   theme(legend.position = "top",
         text = element_text(size = 20),
         legend.title = element_blank())  
+  #scale_x_discrete(labels = ndf[['xlabels']])
   #facet_wrap(~Sex, col =1)
 ggsave("figures/length.png", width = mywidth, height = myheight)
 
@@ -104,7 +101,7 @@ ggplot(df, aes(x=Year, y=Weight, fill = Sources)) +
         legend.title = element_blank())  
 ggsave("figures/weight.png", width = mywidth, height = myheight)
 
-ggplot(df, aes(x=Sex, y=Weight, fill = Sources)) + 
+ggplot(df, aes(x=Sources, y=Weight, fill = Sex)) + 
   #scale_fill_viridis_c() +
   geom_boxplot(position = position_dodge2(width = 0.9, preserve = "single")) + 
   #facet_wrap(~Age)+
@@ -162,7 +159,7 @@ ggplot(data = df , mapping = aes(x=Sex, fill = Sources)) +
         legend.title = element_blank())  
 ggsave("figures/Sexage.png", width = mywidth, height = myheight)
 
-ggplot(data = df , mapping = aes(x=Sex, fill = Sources)) +
+ggplot(data = df , mapping = aes(x=Sex, fill =Sources)) +
   #scale_fill_viridis_b() +
   geom_bar(position = position_dodge2(width = 0.9, preserve = "single")) + 
   labs(y = "Number of fish", fill = "Source") +
@@ -184,21 +181,7 @@ ggplot(data = df , mapping = aes(x=Sex, fill = Sources)) +
   theme(legend.position = "top",
         text = element_text(size = 16),
         legend.title = element_blank())  
-
 ggsave("figures/Sexgear.png", width = mywidth, height = myheight)
-
-#Omit this graph
-sexdf %>%
-  #group_by(Sources) %>%
-  ggplot( aes(x = Sex))+
-  geom_bar()+
-  facet_wrap(~ Year, ncol = 3, scales = "free_y", dir ="h") +
-  theme(legend.position = "top",
-        text = element_text(size = 16),
-        #axis.text.x=element_blank (),
-        legend.title = element_blank())
-  
-  
 
 ggplot(data = ratiodf , mapping = aes(x=Sources, y=F/(F+M), fill = Sources)) +
   geom_bar(stat = "identity") +
@@ -206,6 +189,7 @@ ggplot(data = ratiodf , mapping = aes(x=Sources, y=F/(F+M), fill = Sources)) +
   labs(y = "F/(F+M)", x = NULL) +
   geom_hline(yintercept = 0.5, alpha = 0.4, linetype =2) +
   geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)+
+  geom_text(aes(label=paste0(round(Fratio*100), "%")), position = position_stack(vjust = .75))+
   facet_wrap(~ Year, ncol = 3, scales = "free_y", dir ="h") +
   theme(legend.position = "top",
         text = element_text(size = 16),
